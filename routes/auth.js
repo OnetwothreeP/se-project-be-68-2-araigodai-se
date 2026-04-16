@@ -1,5 +1,5 @@
 const express = require('express');
-const {register, login, getMe, logout} = require('../controllers/auth');
+const {register, login, getMe, logout, updateProfile, deactivateAccount} = require('../controllers/auth');
 
 const router = express.Router();
 const {protect} =  require('../middleware/auth');
@@ -164,6 +164,65 @@ router.post('/login', login);
  *         description: Not authorized
  */
 router.get('/me', protect, getMe);
+
+/**
+ * @swagger
+ * /auth/me:
+ *   put:
+ *     summary: Update user profile
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               telephone:
+ *                 type: string
+ *               houseNumber:
+ *                 type: string
+ *               village:
+ *                 type: string
+ *               lane:
+ *                 type: string
+ *               road:
+ *                 type: string
+ *               subDistrict:
+ *                 type: string
+ *               district:
+ *                 type: string
+ *               province:
+ *                 type: string
+ *               postalCode:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Profile updated successfully
+ *       401:
+ *         description: Not authorized
+ */
+router.put('/me', protect, updateProfile);
+
+/**
+ * @swagger
+ * /auth/deactivate:
+ *   delete:
+ *     summary: Deactivate user account
+ *     tags: [Authentication]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Account deactivated successfully
+ *       401:
+ *         description: Not authorized
+ */
+router.delete('/deactivate', protect, deactivateAccount);
 
 /**
  * @swagger

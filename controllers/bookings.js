@@ -1,6 +1,9 @@
 const Booking = require('../models/Booking');
 const Hotel = require('../models/Hotel');
 
+// @desc    Get all bookings
+// @route   GET /api/v1/bookings (admin) or /api/v1/users/:userId/bookings (user)
+// @access  Private
 exports.getBookings = async (req, res, next) => {
     let query;
 
@@ -40,6 +43,9 @@ exports.getBookings = async (req, res, next) => {
     }
 };
 
+// @desc    Get single booking
+// @route   GET /api/v1/bookings/:id
+// @access  Private
 exports.getBooking = async (req, res, next) => {
     try {
         const booking = await Booking.findById(req.params.id).populate({
@@ -74,6 +80,9 @@ exports.getBooking = async (req, res, next) => {
     }
 };
 
+// @desc    Add booking
+// @route   POST /api/v1/hotels/:hotelId/bookings
+// @access  Private
 exports.addBooking = async (req, res, next) => {
     try {
         req.body.hotel = req.params.hotelId;
@@ -110,6 +119,9 @@ exports.addBooking = async (req, res, next) => {
     }
 };
 
+// @desc    Update booking
+// @route   PUT /api/v1/bookings/:id
+// @access  Private
 exports.updateBooking = async (req, res, next) => {
     try {
         let booking = await Booking.findById(req.params.id);
@@ -153,6 +165,10 @@ exports.updateBooking = async (req, res, next) => {
     }
 };
 
+
+// @desc    Delete booking
+// @route   DELETE /api/v1/bookings/:id
+// @access  Private
 exports.deleteBooking = async (req, res, next) => {
     try {
         const booking = await Booking.findById(req.params.id);

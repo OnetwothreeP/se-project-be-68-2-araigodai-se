@@ -387,6 +387,97 @@ exports.getMyHotels = async (req, res, next) => {
 
 const User = require('../models/User');
 
+// @desc    Check room availability for a hotel on given dates
+// @route   GET /api/v1/hotels/:hotelId/availability?checkInDate=&numberOfNights=&roomType=&excludeBookingId=
+// @access  Public
+exports.checkAvailability = async (req, res, next) => {
+    try {
+        const { hotelId } = req.params;
+        const { checkInDate, numberOfNights, roomType, excludeBookingId } = req.query;
+
+        if (!checkInDate || !numberOfNights) {
+            return res.status(400).json({
+                success: false,
+                message: 'checkInDate and numberOfNights are required'
+            });
+        }
+
+        const hotel = await Hotel.findById(hotelId);
+        if (!hotel) {
+            return res.status(404).json({ success: false, message: 'Hotel not found' });
+        }
+
+        const nights = Number(numberOfNights);
+        const checkIn  = new Date(checkInDate);
+        const checkOut = new Date(checkIn.getTime() + nights * 24 * 60 * 60 * 1000);
+
+        // Build availability for each room type (or just the requested one)
+        const roomTypesToCheck = roomType
+            ? hotel.roomTypes.filter(rt => rt.id === roomType)
+            : hotel.roomTypes;
+
+        const availability = await Promise.all(
+            roomTypesToCheck.map(async (rt) => {
+                // Count bookings that overlap with the requested period
+                // Overlap condition: booking.checkInDate < checkOut AND booking.checkInDate + nights*day > checkIn
+                // Since we don't store checkOutDate, we use $expr with $add
+                const query = {
+                    hotel: hotelId,
+                    roomType: rt.id,
+                    status: { $ne: 'cancelled' },
+                    $expr: {
+                        $and: [
+                            { $lt: ['$checkInDate', checkOut] },
+                            {
+                                $gt: [
+                                    { $add: ['$checkInDate', { $multiply: ['$numberOfNights', 24 * 60 * 60 * 1000] }] },
+                                    checkIn
+                                ]
+                            }
+                        ]
+                    }
+                };
+
+                // Exclude current booking when checking for edit (avoid self-conflict)
+                if (excludeBookingId) {
+                    query._id = { $ne: excludeBookingId };
+                }
+
+                const bookedCount = await Booking.countDocuments(query);
+                const totalRooms  = rt.totalRooms || 0;
+                const available   = Math.max(0, totalRooms - bookedCount);
+
+                return {
+                    roomType:   rt.id,
+                    name:       rt.name,
+                    totalRooms,
+                    booked:     bookedCount,
+                    available,
+                    isAvailable: available > 0
+                };
+            })
+        );
+
+        const requestedResult = roomType ? availability[0] : null;
+
+        res.status(200).json({
+            success: true,
+            hotelId,
+            checkInDate,
+            numberOfNights: nights,
+            availability,
+            // Convenience field when checking a specific room type
+            ...(requestedResult && {
+                isAvailable:    requestedResult.isAvailable,
+                availableRooms: requestedResult.available
+            })
+        });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 // @desc    Get global platform statistics + per-hotel breakdown for Admin Dashboard
 // @route   GET /api/v1/hotels/admin/dashboard
 // @access  Private (Admin only)

@@ -61,7 +61,15 @@ const seedData = async () => {
       role: 'user'
     });
 
-    console.log(`Created ${4} users`.green);
+    await User.create({
+      name: 'P User',
+      telephone: '0800000000',
+      email: 'p@gmail.com',
+      password: '123456',
+      role: 'user'
+    });
+
+    console.log(`Created ${5} users`.green);
 
     // Create hotels
     console.log('Creating hotels...'.yellow);
@@ -188,6 +196,7 @@ const seedData = async () => {
     console.log('  Email: john@example.com | Password: password123');
     console.log('  Email: jane@example.com | Password: password123');
     console.log('  Email: bob@example.com  | Password: password123');
+    console.log('  Email: p@gmail.com      | Password: 123456');
     console.log('\n=================================\n'.cyan);
 
     process.exit(0);

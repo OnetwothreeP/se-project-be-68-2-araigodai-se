@@ -1,5 +1,5 @@
 const express = require('express');
-const { getBookings, getBooking, addBooking, updateBooking, deleteBooking, cancelBooking, updatePaidBooking, getBookingRequests, respondToBookingRequest, mockPayBooking } = require('../controllers/bookings');
+const { getBookings, getBooking, addBooking, updateBooking, deleteBooking, cancelBooking, updatePaidBooking, getBookingRequests, respondToBookingRequest, mockPayBooking, createBookingRequest, getMyBookingRequests } = require('../controllers/bookings');
 
 const router = express.Router({ mergeParams: true });
 
@@ -89,6 +89,7 @@ router.route('/')
 
 // Must be defined BEFORE /:id to prevent Express matching "requests" as a booking id
 router.get('/requests', protect, authorize('admin'), getBookingRequests);
+router.get('/my-requests', protect, authorize('user'), getMyBookingRequests);
 
 /**
  * @swagger
@@ -299,6 +300,9 @@ router.route('/:id')
  *         description: Booking not found
  */
 router.post('/:id/cancel', protect, authorize('admin', 'user', 'owner'), cancelBooking);
+
+// User submits an edit/delete request for admin approval
+router.post('/:id/request', protect, authorize('user'), createBookingRequest);
 
 /**
  * @swagger

@@ -513,6 +513,127 @@ exports.deleteBooking = async (req, res, next) => {
     }
 };
 
+// @desc    Create a booking request (user submits edit/delete for admin approval)
+// @route   POST /api/v1/bookings/:id/request
+// @access  Private (User only)
+exports.createBookingRequest = async (req, res, next) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+
+        if (!booking) {
+            return res.status(404).json({
+                success: false,
+                message: `No booking with the id of ${req.params.id}`
+            });
+        }
+
+        // Only the booking owner can submit a request
+        if (booking.user.toString() !== req.user.id) {
+            return res.status(403).json({
+                success: false,
+                message: 'Not authorized to submit a request for this booking'
+            });
+        }
+
+        if (booking.status === 'cancelled') {
+            return res.status(400).json({
+                success: false,
+                message: 'Cannot submit a request for a cancelled booking'
+            });
+        }
+
+        const { type, newCheckInDate, newNumberOfNights } = req.body;
+
+        if (!['edit', 'delete'].includes(type)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid request type. Use "edit" or "delete".'
+            });
+        }
+
+        if (type === 'edit') {
+            if (!newCheckInDate && newNumberOfNights === undefined) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Please provide newCheckInDate or newNumberOfNights for an edit request.'
+                });
+            }
+            if (newNumberOfNights !== undefined) {
+                const nights = Number(newNumberOfNights);
+                if (nights < 1 || nights > 3 || Number.isNaN(nights)) {
+                    return res.status(400).json({
+                        success: false,
+                        message: 'Number of nights must be between 1 and 3'
+                    });
+                }
+            }
+        }
+
+        // Check for existing pending request for this booking
+        const existing = await BookingRequest.findOne({
+            booking: booking._id,
+            status: 'pending'
+        });
+
+        if (existing) {
+            return res.status(400).json({
+                success: false,
+                message: 'A pending request already exists for this booking. Please wait for admin review.'
+            });
+        }
+
+        const requestData = {
+            booking: booking._id,
+            type,
+            requestedBy: req.user.id,
+            ...(type === 'edit' && newCheckInDate    ? { newCheckInDate }    : {}),
+            ...(type === 'edit' && newNumberOfNights !== undefined ? { newNumberOfNights: Number(newNumberOfNights) } : {}),
+        };
+
+        const request = await BookingRequest.create(requestData);
+
+        // Mark the booking as pending while the request awaits admin review
+        booking.status = 'pending';
+        await booking.save();
+
+        res.status(201).json({
+            success: true,
+            message: 'Your request has been submitted and is pending admin approval.',
+            data: request
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'Cannot create booking request'
+        });
+    }
+};
+
+// @desc    Get booking requests for the current user
+// @route   GET /api/v1/bookings/my-requests
+// @access  Private (User)
+exports.getMyBookingRequests = async (req, res, next) => {
+    try {
+        const requests = await BookingRequest.find({ requestedBy: req.user.id })
+            .populate({
+                path: 'booking',
+                select: 'checkInDate numberOfNights hotel status',
+                populate: { path: 'hotel', select: 'name' }
+            })
+            .sort('-createdAt');
+
+        res.status(200).json({
+            success: true,
+            count: requests.length,
+            data: requests
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 // @desc    Get all booking requests — optionally filter by status (?status=pending|approved|rejected)
 // @route   GET /api/v1/bookings/requests
 // @access  Private (Admin only)
@@ -605,6 +726,7 @@ exports.respondToBookingRequest = async (req, res, next) => {
                 if (request.newCheckInDate) booking.checkInDate = request.newCheckInDate;
                 if (request.newNumberOfNights) booking.numberOfNights = request.newNumberOfNights;
                 booking.updateReason = `Approved user edit request: ${reason}`;
+                booking.status = 'confirmed'; // restore after pending
                 await booking.save();
             } else if (request.type === 'delete') {
                 const cancellation = await applyCancellationPolicy(booking, req.user, `Approved user cancel request: ${reason}`);
@@ -614,6 +736,13 @@ exports.respondToBookingRequest = async (req, res, next) => {
                         message: cancellation.message
                     });
                 }
+            }
+        } else {
+            // Rejected — restore booking status back to confirmed
+            const booking = await Booking.findById(request.booking._id);
+            if (booking && booking.status === 'pending') {
+                booking.status = 'confirmed';
+                await booking.save();
             }
         }
 

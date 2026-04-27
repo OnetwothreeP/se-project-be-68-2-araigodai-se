@@ -1,5 +1,5 @@
 const express = require('express');
-const {register, login, getMe, logout, updateProfile, deactivateAccount} = require('../controllers/auth');
+const {register, login, getMe, logout, updateProfile, deactivateAccount, updateUserRole} = require('../controllers/auth');
 
 const router = express.Router();
 const {protect} =  require('../middleware/auth');
@@ -235,5 +235,9 @@ router.delete('/deactivate', protect, deactivateAccount);
  *         description: Logout successful
  */
 router.get('/logout', logout);
+
+// Admin update user role
+router.put('/users/:userId/role', protect, authorize('admin'), updateUserRole);
+
 
 module.exports = router;

@@ -1,5 +1,5 @@
 const express = require('express');
-const { getHotels, getHotel, createHotel, updateHotel, deleteHotel } = require('../controllers/hotels');
+const { getHotels, getHotel, createHotel, updateHotel, deleteHotel, getFinancialStats, exportFinancialCSV, getHotelDashboard, getAdminPlatformStats} = require('../controllers/hotels');
 
 const bookingRouter = require('./bookings');
 const router = express.Router();
@@ -218,6 +218,18 @@ router.route('/')
  *       404:
  *         description: Hotel not found
  */
+router.route('/:hotelId/financial')
+    .get(protect, authorize('admin', 'owner'), getFinancialStats);
+
+router.route('/:hotelId/financial/export')
+    .get(protect, authorize('admin', 'owner'), exportFinancialCSV);
+
+router.route('/:hotelId/dashboard')
+    .get(protect, authorize('admin', 'owner'), getHotelDashboard);
+
+router.route('/admin/dashboard')
+    .get(protect, authorize('admin'), getAdminPlatformStats);
+
 router.route('/:id')
     .get(getHotel)
     .put(protect, authorize('admin', 'owner'), updateHotel)

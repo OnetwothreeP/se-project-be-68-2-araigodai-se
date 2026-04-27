@@ -601,3 +601,51 @@ exports.respondToBookingRequest = async (req, res, next) => {
         });
     }
 };
+
+// @desc    Mock Payment for Demo purposes
+// @route   POST /api/v1/bookings/:id/mock-pay
+// @access  Private
+exports.mockPayBooking = async (req, res, next) => {
+    try {
+        let booking = await Booking.findById(req.params.id);
+
+        if (!booking) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Booking not found' 
+            });
+        }
+
+        // Ensure the user actually owns this booking
+        if (booking.user.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ 
+                success: false, 
+                message: `User ${req.user.id} is not authorized to pay for this booking` 
+            });
+        }
+
+        // 1. Simulate network latency (2 seconds) to make the demo look realistic
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        await delay(2000); 
+
+        // 2. Update the database automatically
+        booking.paymentStatus = 'paid';
+        booking.status = 'confirmed';
+        
+        // Save the updated booking
+        await booking.save();
+
+        // 3. Return a fake transaction ID to the frontend
+        res.status(200).json({
+            success: true,
+            message: 'Payment successful (Mock)',
+            transactionId: 'mock_txn_' + Math.floor(Math.random() * 1000000000)
+        });
+
+    } catch (err) {
+        res.status(500).json({ 
+            success: false, 
+            message: err.message 
+        });
+    }
+};

@@ -1,5 +1,5 @@
 const express = require('express');
-const { getBookings, getBooking, addBooking, updateBooking, deleteBooking, cancelBooking, updatePaidBooking, respondToBookingRequest } = require('../controllers/bookings');
+const { getBookings, getBooking, addBooking, updateBooking, deleteBooking, cancelBooking, updatePaidBooking, respondToBookingRequest, mockPayBooking } = require('../controllers/bookings');
 
 const router = express.Router({ mergeParams: true });
 
@@ -391,5 +391,8 @@ router.patch('/:id/paid-update', protect, authorize('admin', 'user', 'owner'), u
  *         description: Request not found
  */
 router.put('/requests/:requestId/respond', protect, authorize('admin'), respondToBookingRequest);
+
+router.route('/:id/mock-pay')
+    .post(protect, authorize('admin', 'user'), mockPayBooking);
 
 module.exports = router;

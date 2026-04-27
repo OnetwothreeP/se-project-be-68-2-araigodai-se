@@ -179,3 +179,63 @@ exports.deactivateAccount = async(req, res, next) => {
         });
     }
 }
+
+// อย่าลืมเช็คว่าด้านบนมีการเรียกใช้ User model แล้ว 
+// const User = require('../models/User');
+
+// @desc    Update user role (Assign/Revoke Hotel Owner)
+// @route   PUT /api/v1/auth/users/:userId/role
+// @access  Private (Admin only)
+exports.updateUserRole = async (req, res, next) => {
+    try {
+        const { userId } = req.params;
+        const { role, hotelId } = req.body;
+
+        // 1. ตรวจสอบว่า Role ที่ส่งมาถูกต้องหรือไม่
+        if (!['user', 'owner', 'admin'].includes(role)) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Invalid role specified. Must be user, owner, or admin' 
+            });
+        }
+
+        let updateData = { role };
+
+        // 2. จัดการเงื่อนไขตาม Role
+        if (role === 'owner') {
+            // ถ้าจะโปรโมทเป็น Owner ต้องระบุว่าให้เป็นเจ้าของโรงแรมไหน
+            if (!hotelId) {
+                return res.status(400).json({ 
+                    success: false, 
+                    message: 'Please provide a hotelId to assign to this owner' 
+                });
+            }
+            updateData.hotel = hotelId;
+        } else if (role === 'user') {
+            // ถ้ายกเลิกสิทธิ์ (Revoke) กลับเป็น User ธรรมดา ให้ลบการเชื่อมโยงกับโรงแรมออก
+            updateData.$unset = { hotel: 1 };
+        }
+
+        // 3. อัปเดตข้อมูล User ลงฐานข้อมูล
+        const user = await User.findByIdAndUpdate(
+            userId,
+            role === 'user' ? { role: 'user', $unset: { hotel: 1 } } : updateData,
+            { 
+                new: true, 
+                runValidators: true 
+            }
+        ).select('-password'); // ไม่ส่ง password กลับไปเพื่อความปลอดภัย
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};

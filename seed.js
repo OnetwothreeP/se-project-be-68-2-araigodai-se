@@ -80,9 +80,9 @@ const seedData = async () => {
       telephone: '021234567',
       pricePerNight: 2500,
       roomTypes: [
-        { id: 'standard', name: 'Standard Room', pricePerNight: 1500, totalRooms: 20 },
-        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 2500, totalRooms: 12 },
-        { id: 'suite',    name: 'Suite Room',    pricePerNight: 5000, totalRooms: 5  },
+        { id: 'standard', name: 'Standard Room', pricePerNight: 1500, totalRooms: 20, amenities: ['Single Bed', 'Private Bathroom', '32" TV', 'Free Wi-Fi', 'Air Conditioning'] },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 2500, totalRooms: 12, amenities: ['Queen Size Bed', 'Private Bathroom', '43" TV', 'Free Wi-Fi', 'Air Conditioning', 'City View', 'Minibar & Refrigerator'] },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 5000, totalRooms: 5,  amenities: ['King Size Bed', 'Private Bathroom + Bathtub', '55" TV', 'Free Wi-Fi', 'Air Conditioning', 'Panoramic View', 'Separate Living Room', 'Minibar & Refrigerator', 'Free Breakfast for 2'] },
       ]
     });
 
@@ -92,9 +92,9 @@ const seedData = async () => {
       telephone: '053987654',
       pricePerNight: 1800,
       roomTypes: [
-        { id: 'standard', name: 'Standard Room', pricePerNight: 1000, totalRooms: 15 },
-        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 1800, totalRooms: 10 },
-        { id: 'suite',    name: 'Suite Room',    pricePerNight: 3500, totalRooms: 4  },
+        { id: 'standard', name: 'Standard Room', pricePerNight: 1000, totalRooms: 15, amenities: ['Single Bed', 'Private Bathroom', '32" TV', 'Free Wi-Fi', 'Air Conditioning', 'River View'] },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 1800, totalRooms: 10, amenities: ['Queen Size Bed', 'Private Bathroom', '43" TV', 'Free Wi-Fi', 'Air Conditioning', 'River View', 'Balcony'] },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 3500, totalRooms: 4,  amenities: ['King Size Bed', 'Private Bathroom + Bathtub', '55" TV', 'Free Wi-Fi', 'Air Conditioning', 'River View', 'Private Balcony', 'Living Room', 'Free Breakfast for 2'] },
       ]
     });
 
@@ -104,9 +104,9 @@ const seedData = async () => {
       telephone: '076555666',
       pricePerNight: 3200,
       roomTypes: [
-        { id: 'standard', name: 'Standard Room', pricePerNight: 2000, totalRooms: 18 },
-        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 3200, totalRooms: 10 },
-        { id: 'suite',    name: 'Suite Room',    pricePerNight: 6500, totalRooms: 6  },
+        { id: 'standard', name: 'Standard Room', pricePerNight: 2000, totalRooms: 18, amenities: ['Double Bed', 'Private Bathroom', '40" TV', 'Free Wi-Fi', 'Air Conditioning', 'Pool Access'] },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 3200, totalRooms: 10, amenities: ['Queen Size Bed', 'Private Bathroom', '50" TV', 'Free Wi-Fi', 'Air Conditioning', 'Sea View', 'Pool Access', 'Minibar'] },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 6500, totalRooms: 6,  amenities: ['King Size Bed', 'Jacuzzi', '65" TV', 'Free Wi-Fi', 'Air Conditioning', 'Direct Sea View', 'Private Pool', 'Living Room', 'Free Breakfast for 2', 'Butler Service'] },
       ]
     });
 
@@ -116,9 +116,9 @@ const seedData = async () => {
       telephone: '053698745',
       pricePerNight: 1200,
       roomTypes: [
-        { id: 'standard', name: 'Standard Room', pricePerNight: 800,  totalRooms: 12 },
-        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 1200, totalRooms: 8  },
-        { id: 'suite',    name: 'Suite Room',    pricePerNight: 2500, totalRooms: 3  },
+        { id: 'standard', name: 'Standard Room', pricePerNight: 800,  totalRooms: 12, amenities: ['Single Bed', 'Private Bathroom', '32" TV', 'Free Wi-Fi', 'Fan', 'Mountain View'] },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 1200, totalRooms: 8,  amenities: ['Queen Size Bed', 'Private Bathroom', '40" TV', 'Free Wi-Fi', 'Air Conditioning', 'Mountain View', 'Balcony'] },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 2500, totalRooms: 3,  amenities: ['King Size Bed', 'Private Bathroom + Bathtub', '50" TV', 'Free Wi-Fi', 'Air Conditioning', 'Panoramic Mountain View', 'Private Terrace', 'Free Breakfast for 2'] },
       ]
     });
 
@@ -128,9 +128,9 @@ const seedData = async () => {
       telephone: '038123456',
       pricePerNight: 2000,
       roomTypes: [
-        { id: 'standard', name: 'Standard Room', pricePerNight: 1200, totalRooms: 16 },
-        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 2000, totalRooms: 10 },
-        { id: 'suite',    name: 'Suite Room',    pricePerNight: 4000, totalRooms: 4  },
+        { id: 'standard', name: 'Standard Room', pricePerNight: 1200, totalRooms: 16, amenities: ['Double Bed', 'Private Bathroom', '40" TV', 'Free Wi-Fi', 'Air Conditioning'] },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 2000, totalRooms: 10, amenities: ['Queen Size Bed', 'Private Bathroom', '50" TV', 'Free Wi-Fi', 'Air Conditioning', 'City View', 'Minibar'] },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 4000, totalRooms: 4,  amenities: ['King Size Bed', 'Private Bathroom + Bathtub', '55" TV', 'Free Wi-Fi', 'Air Conditioning', 'Sea View', 'Living Room', 'Minibar', 'Free Breakfast for 2'] },
       ]
     });
 

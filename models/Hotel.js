@@ -53,6 +53,10 @@ const HotelSchema = new mongoose.Schema({
                 required: true,
                 min: [1, 'Must have at least 1 room'],
                 default: 10
+            },
+            amenities: {
+                type: [String],
+                default: []
             }
         }],
         default: []

@@ -85,6 +85,13 @@ const BookingSchema = new mongoose.Schema({
         default: null
     },
 
+    // Room type selected at booking time (matches frontend ROOM_TYPES ids: standard | deluxe | suite)
+    roomType: {
+        type: String,
+        enum: ['standard', 'deluxe', 'suite'],
+        default: null
+    },
+
     createdAt: {
         type: Date,
         default: Date.now

@@ -185,7 +185,34 @@ exports.addBooking = async (req, res, next) => {
         }
 
         req.body.user = req.user.id;
-        const pricePerNight = Number(hotel.pricePerNight) || 0;
+
+        // Persist roomType if provided by the frontend
+        if (req.body.roomType) {
+            const validRoomTypes = ['standard', 'deluxe', 'suite'];
+            if (!validRoomTypes.includes(req.body.roomType)) {
+                return res.status(400).json({
+                    success: false,
+                    message: `Invalid room type. Must be one of: ${validRoomTypes.join(', ')}`
+                });
+            }
+        }
+
+        // Calculate price: use room type price if hotel has roomTypes defined, else fall back to hotel.pricePerNight
+        let pricePerNight = 0;
+        if (req.body.roomType && hotel.roomTypes && hotel.roomTypes.length > 0) {
+            const roomTypeDef = hotel.roomTypes.find(rt => rt.id === req.body.roomType);
+            if (roomTypeDef) {
+                pricePerNight = Number(roomTypeDef.pricePerNight) || 0;
+            } else {
+                return res.status(400).json({
+                    success: false,
+                    message: `Room type "${req.body.roomType}" is not available at this hotel.`
+                });
+            }
+        } else {
+            pricePerNight = Number(hotel.pricePerNight) || 0;
+        }
+
         req.body.totalPrice = toMoney(pricePerNight * req.body.numberOfNights);
         req.body.amountPaid = req.body.totalPrice;
         req.body.paymentStatus = 'paid';

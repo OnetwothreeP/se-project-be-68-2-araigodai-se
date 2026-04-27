@@ -78,35 +78,60 @@ const seedData = async () => {
       name: 'Grand Hotel Bangkok',
       address: '123 Sukhumvit Road, Watthana, Bangkok 10110',
       telephone: '021234567',
-      pricePerNight: 2500
+      pricePerNight: 2500,
+      roomTypes: [
+        { id: 'standard', name: 'Standard Room', pricePerNight: 1500, totalRooms: 20 },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 2500, totalRooms: 12 },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 5000, totalRooms: 5  },
+      ]
     });
 
     const hotel2 = await Hotel.create({
       name: 'Riverside Resort Chiang Mai',
       address: '456 Ping River Road, Muang, Chiang Mai 50000',
       telephone: '053987654',
-      pricePerNight: 1800
+      pricePerNight: 1800,
+      roomTypes: [
+        { id: 'standard', name: 'Standard Room', pricePerNight: 1000, totalRooms: 15 },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 1800, totalRooms: 10 },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 3500, totalRooms: 4  },
+      ]
     });
 
     const hotel3 = await Hotel.create({
       name: 'Beach Paradise Phuket',
       address: '789 Patong Beach Road, Kathu, Phuket 83150',
       telephone: '076555666',
-      pricePerNight: 3200
+      pricePerNight: 3200,
+      roomTypes: [
+        { id: 'standard', name: 'Standard Room', pricePerNight: 2000, totalRooms: 18 },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 3200, totalRooms: 10 },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 6500, totalRooms: 6  },
+      ]
     });
 
     const hotel4 = await Hotel.create({
       name: 'Mountain View Hotel Pai',
       address: '321 Mountain Road, Pai, Mae Hong Son 58130',
       telephone: '053698745',
-      pricePerNight: 1200
+      pricePerNight: 1200,
+      roomTypes: [
+        { id: 'standard', name: 'Standard Room', pricePerNight: 800,  totalRooms: 12 },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 1200, totalRooms: 8  },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 2500, totalRooms: 3  },
+      ]
     });
 
     const hotel5 = await Hotel.create({
       name: 'City Center Hotel Pattaya',
       address: '654 Beach Road, Pattaya City, Chonburi 20150',
       telephone: '038123456',
-      pricePerNight: 2000
+      pricePerNight: 2000,
+      roomTypes: [
+        { id: 'standard', name: 'Standard Room', pricePerNight: 1200, totalRooms: 16 },
+        { id: 'deluxe',   name: 'Deluxe Room',   pricePerNight: 2000, totalRooms: 10 },
+        { id: 'suite',    name: 'Suite Room',    pricePerNight: 4000, totalRooms: 4  },
+      ]
     });
 
     console.log(`Created ${5} hotels`.green);
@@ -118,6 +143,7 @@ const seedData = async () => {
     await Booking.create({
       checkInDate: new Date('2024-12-25'),
       numberOfNights: 2,
+      roomType: 'deluxe',
       totalPrice: 2500 * 2,
       amountPaid: 2500 * 2,
       paymentStatus: 'paid',
@@ -129,8 +155,9 @@ const seedData = async () => {
     await Booking.create({
       checkInDate: new Date('2025-01-15'),
       numberOfNights: 3,
-      totalPrice: 1800 * 3,
-      amountPaid: 1800 * 3,
+      roomType: 'standard',
+      totalPrice: 1000 * 3,
+      amountPaid: 1000 * 3,
       paymentStatus: 'paid',
       status: 'confirmed',
       user: user1._id,
@@ -141,8 +168,9 @@ const seedData = async () => {
     await Booking.create({
       checkInDate: new Date('2024-12-28'),
       numberOfNights: 1,
-      totalPrice: 3200 * 1,
-      amountPaid: 3200 * 1,
+      roomType: 'suite',
+      totalPrice: 6500 * 1,
+      amountPaid: 6500 * 1,
       paymentStatus: 'paid',
       status: 'confirmed',
       user: user2._id,
@@ -152,8 +180,9 @@ const seedData = async () => {
     await Booking.create({
       checkInDate: new Date('2025-02-10'),
       numberOfNights: 2,
-      totalPrice: 1200 * 2,
-      amountPaid: 1200 * 2,
+      roomType: 'standard',
+      totalPrice: 800 * 2,
+      amountPaid: 800 * 2,
       paymentStatus: 'paid',
       status: 'confirmed',
       user: user2._id,
@@ -164,6 +193,7 @@ const seedData = async () => {
     await Booking.create({
       checkInDate: new Date('2025-01-05'),
       numberOfNights: 3,
+      roomType: 'deluxe',
       totalPrice: 2000 * 3,
       amountPaid: 2000 * 3,
       paymentStatus: 'paid',
@@ -175,8 +205,9 @@ const seedData = async () => {
     await Booking.create({
       checkInDate: new Date('2025-03-20'),
       numberOfNights: 2,
-      totalPrice: 2500 * 2,
-      amountPaid: 2500 * 2,
+      roomType: 'suite',
+      totalPrice: 5000 * 2,
+      amountPaid: 5000 * 2,
       paymentStatus: 'paid',
       status: 'confirmed',
       user: user3._id,

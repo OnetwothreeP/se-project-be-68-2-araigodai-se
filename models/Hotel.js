@@ -31,6 +31,33 @@ const HotelSchema = new mongoose.Schema({
         type: Number
     },
 
+    // Room types — each hotel defines its own room types with individual pricing
+    roomTypes: {
+        type: [{
+            id: {
+                type: String,
+                required: true,
+                enum: ['standard', 'deluxe', 'suite']
+            },
+            name: {
+                type: String,
+                required: true
+            },
+            pricePerNight: {
+                type: Number,
+                required: true,
+                min: [0, 'Price cannot be negative']
+            },
+            totalRooms: {
+                type: Number,
+                required: true,
+                min: [1, 'Must have at least 1 room'],
+                default: 10
+            }
+        }],
+        default: []
+    },
+
     // เพิ่มใหม่ — owner ของโรงแรม
     ownerId: {
         type: mongoose.Schema.Types.ObjectId,

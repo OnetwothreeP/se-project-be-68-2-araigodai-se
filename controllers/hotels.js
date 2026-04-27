@@ -372,8 +372,8 @@ exports.getAdminPlatformStats = async (req, res, next) => {
 
         // --- Fetch all bookings once for revenue + per-hotel stats ---
         const [allBookings, hotels, globalRecentBookings] = await Promise.all([
-            Booking.find().select('hotel checkInDate totalPrice status paymentStatus'),
-            Hotel.find().select('name'),
+            Booking.find().select('hotel checkInDate totalPrice status paymentStatus roomType'),
+            Hotel.find().select('name roomTypes'),
             Booking.find()
                 .sort('-createdAt')
                 .limit(10)
@@ -399,11 +399,37 @@ exports.getAdminPlatformStats = async (req, res, next) => {
             let totalRevenue = 0;
             let pendingBookings = 0;
 
+            // Room type occupancy counters
+            const roomTypeCounts = { standard: 0, deluxe: 0, suite: 0 };
+
             hBookings.forEach(b => {
                 const month = new Date(b.checkInDate).getMonth();
                 if (month >= 0 && month < 12) monthlyBookings[month]++;
                 if (b.paymentStatus === 'paid') totalRevenue += (b.totalPrice || 0);
                 if (b.status === 'pending') pendingBookings++;
+                if (b.roomType && roomTypeCounts[b.roomType] !== undefined) {
+                    roomTypeCounts[b.roomType]++;
+                }
+            });
+
+            const totalRoomBookings = hBookings.length || 1; // avoid divide-by-zero
+
+            // Build occupancy using totalRooms from hotel definition if available
+            const ROOM_DEFS = [
+                { type: 'standard', label: 'Standard Room' },
+                { type: 'deluxe',   label: 'Deluxe Room'   },
+                { type: 'suite',    label: 'Suite Room'    },
+            ];
+
+            const roomTypeOccupancy = ROOM_DEFS.map(def => {
+                const count = roomTypeCounts[def.type] || 0;
+                // If hotel has roomTypes defined, use totalRooms for real occupancy %
+                const hotelRoomDef = hotel.roomTypes && hotel.roomTypes.find(rt => rt.id === def.type);
+                const totalRooms = hotelRoomDef ? hotelRoomDef.totalRooms : null;
+                const rate = totalRooms
+                    ? Math.min(100, Math.round((count / totalRooms) * 100))
+                    : Math.round((count / totalRoomBookings) * 100);
+                return { type: def.type, label: def.label, count, rate, totalRooms };
             });
 
             return {
@@ -413,6 +439,7 @@ exports.getAdminPlatformStats = async (req, res, next) => {
                 totalRevenue,
                 pendingBookings,
                 monthlyBookings,
+                roomTypeOccupancy,
             };
         });
 

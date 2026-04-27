@@ -1,5 +1,5 @@
 const express = require('express');
-const { getHotels, getHotel, createHotel, updateHotel, deleteHotel, getFinancialStats, exportFinancialCSV, getHotelDashboard, getAdminPlatformStats, getMyHotels, checkAvailability} = require('../controllers/hotels');
+const { getHotels, getHotel, createHotel, updateHotel, deleteHotel, getFinancialStats, exportFinancialCSV, getHotelDashboard, getAdminPlatformStats, getMyHotels, checkAvailability, getHotelBookingRequests} = require('../controllers/hotels');
 
 const bookingRouter = require('./bookings');
 const router = express.Router();
@@ -234,6 +234,9 @@ router.route('/:hotelId/financial/export')
 
 router.route('/:hotelId/dashboard')
     .get(protect, authorize('admin', 'owner'), getHotelDashboard);
+
+router.route('/:hotelId/booking-requests')
+    .get(protect, authorize('admin', 'owner'), getHotelBookingRequests);
 
 // Availability check — public, used by booking and edit pages
 router.route('/:hotelId/availability')

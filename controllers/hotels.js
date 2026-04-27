@@ -306,6 +306,47 @@ exports.exportFinancialCSV = async (req, res, next) => {
     }
 };
 
+// @desc    Get booking requests for a specific hotel (owner/admin)
+// @route   GET /api/v1/hotels/:hotelId/booking-requests
+// @access  Private (Owner/Admin)
+exports.getHotelBookingRequests = async (req, res, next) => {
+    try {
+        const { hotelId } = req.params;
+
+        // Owner can only see requests for their own hotel
+        if (req.user.role === 'owner' && req.user.hotel && req.user.hotel.toString() !== hotelId) {
+            return res.status(403).json({ success: false, message: 'Not authorized to view requests for this hotel' });
+        }
+
+        // Get all bookings for this hotel first
+        const Booking = require('../models/Booking');
+        const BookingRequest = require('../models/BookingRequest');
+
+        const hotelBookings = await Booking.find({ hotel: hotelId }).select('_id');
+        const bookingIds = hotelBookings.map(b => b._id);
+
+        const filter = { booking: { $in: bookingIds } };
+        if (req.query.status) filter.status = req.query.status;
+
+        const requests = await BookingRequest.find(filter)
+            .populate({
+                path: 'booking',
+                select: 'checkInDate numberOfNights hotel status',
+                populate: { path: 'hotel', select: 'name' }
+            })
+            .populate({ path: 'requestedBy', select: 'name email' })
+            .sort('-createdAt');
+
+        res.status(200).json({
+            success: true,
+            count: requests.length,
+            data: requests
+        });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 // @desc    Get dashboard statistics for a hotel
 // @route   GET /api/v1/hotels/:hotelId/dashboard
 // @access  Private (Owner/Admin)

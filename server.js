@@ -63,20 +63,25 @@ const app = express();
 // This allows rate limiting and other features to work correctly
 app.set('trust proxy', 1);
 
-// Set timeout for all requests (3 seconds as per performance requirement)
+// Set timeout for all requests (30 seconds)
 app.use((req, res, next) => {
-    req.setTimeout(3000);
-    res.setTimeout(3000);
+    req.setTimeout(30000);
+    res.setTimeout(30000);
     next();
 });
 
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({
+    origin: '*',
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: false,
+}));
 app.use(helmet());
 app.use(xss());
 app.use(limiter);
 app.use(hpp());
-app.use(cors());
 // app.use(mongoSanitize());
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 app.use('/api/v1/hotels', hotels);
@@ -96,8 +101,8 @@ const server = app.listen(PORT, () => {
     console.log(`Test with Postman at http://localhost:${PORT}/api/v1`);
 });
 
-// Set server timeout to 3 seconds
-server.timeout = 3000;
+// Set server timeout to 30 seconds
+server.timeout = 30000;
 
 process.on('unhandledRejection', (err)=> {
     console.log(`Error: ${err.message}`);

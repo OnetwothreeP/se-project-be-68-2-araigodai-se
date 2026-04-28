@@ -472,6 +472,36 @@ describe('Bookings Controller', () => {
             expect(res.status).toHaveBeenCalledWith(201);
         });
 
+        test('400 no rooms available on selected dates', async () => {
+            req.params.hotelId = 'h1';
+            req.body.checkInDate = '2026-05-01';
+            req.body.numberOfNights = 2;
+            req.body.roomType = 'deluxe';
+            Hotel.findById.mockResolvedValue({ 
+                _id: 'h1', 
+                roomTypes: [{ id: 'deluxe', pricePerNight: 2000, totalRooms: 5 }] 
+            });
+            Booking.countDocuments.mockResolvedValue(5); // จำลองว่าห้องเต็มแล้วทั้ง 5 ห้อง
+            await addBooking(req, res, next);
+            expect(res.status).toHaveBeenCalledWith(400);
+            expect(res.json).toHaveBeenCalledWith(expect.objectContaining({ message: 'No rooms available on the selected dates.' }));
+        });
+
+        test('201 success when rooms are available with totalRooms check', async () => {
+            req.params.hotelId = 'h1';
+            req.body.checkInDate = '2026-05-01';
+            req.body.numberOfNights = 2;
+            req.body.roomType = 'deluxe';
+            Hotel.findById.mockResolvedValue({ 
+                _id: 'h1', 
+                roomTypes: [{ id: 'deluxe', pricePerNight: 2000, totalRooms: 5 }] 
+            });
+            Booking.countDocuments.mockResolvedValue(2); // จำลองว่าจองไป 2 ห้อง (ยังว่าง)
+            Booking.create.mockResolvedValue({ _id: 'b2' });
+            await addBooking(req, res, next);
+            expect(res.status).toHaveBeenCalledWith(201);
+        });
+
         test('500 error', async () => {
             Hotel.findById.mockRejectedValue(new Error('DB'));
             await addBooking(req, res, next);

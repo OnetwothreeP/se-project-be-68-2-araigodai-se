@@ -39,7 +39,7 @@ const applyCancellationPolicy = async (booking, user, reason) => {
         };
     }
 
-    if (user.role === 'admin' && !reason) {
+    if ((user.role === 'admin' || user.role === 'owner') && !reason) {
         return {
             success: false,
             code: 400,
@@ -84,28 +84,36 @@ const applyCancellationPolicy = async (booking, user, reason) => {
 };
 
 // @desc    Get all bookings
-// @route   GET /api/v1/bookings (admin) or /api/v1/users/:userId/bookings (user)
+// @route   GET /api/v1/bookings (admin) or /api/v1/hotels/:hotelId/bookings (admin/owner)
 // @access  Private
 exports.getBookings = async (req, res, next) => {
     let query;
 
-    if (req.user.role !== 'admin') {
-        query = Booking.find({ user: req.user.id }).populate({
-            path: 'hotel',
-            select: 'name address telephone'
-        });
-    } else {
-        if (req.params.hotelId) {
-            query = Booking.find({ hotel: req.params.hotelId }).populate({
-                path: 'hotel',
-                select: 'name address telephone'
-            });
-        } else {
-            query = Booking.find().populate({
-                path: 'hotel',
-                select: 'name address telephone'
-            });
+    if (req.user.role === 'admin') {
+        // Admin: filter by hotel if hotelId param present, otherwise all bookings
+        const filter = req.params.hotelId ? { hotel: req.params.hotelId } : {};
+        query = Booking.find(filter)
+            .populate({ path: 'hotel', select: 'name address telephone' })
+            .populate({ path: 'user', select: 'name email' });
+    } else if (req.user.role === 'owner') {
+        // Owner: must provide hotelId; verify ownership before returning bookings
+        if (!req.params.hotelId) {
+            return res.status(400).json({ success: false, message: 'hotelId is required for owner' });
         }
+        const hotel = await Hotel.findById(req.params.hotelId);
+        if (!hotel) {
+            return res.status(404).json({ success: false, message: 'Hotel not found' });
+        }
+        if (!hotel.ownerId || hotel.ownerId.toString() !== req.user.id.toString()) {
+            return res.status(403).json({ success: false, message: 'Not authorized to view bookings for this hotel' });
+        }
+        query = Booking.find({ hotel: req.params.hotelId })
+            .populate({ path: 'hotel', select: 'name address telephone' })
+            .populate({ path: 'user', select: 'name email' });
+    } else {
+        // Regular user: only their own bookings
+        query = Booking.find({ user: req.user.id })
+            .populate({ path: 'hotel', select: 'name address telephone' });
     }
 
     try {
@@ -283,7 +291,16 @@ exports.cancelBooking = async (req, res, next) => {
             });
         }
 
-        if (booking.user.toString() !== req.user.id && req.user.role !== 'admin') {
+        // Allow: booking owner, admin, or hotel owner
+        const isBookingOwner = booking.user.toString() === req.user.id;
+        const isAdmin = req.user.role === 'admin';
+        let isHotelOwner = false;
+        if (req.user.role === 'owner') {
+            const hotel = await Hotel.findById(booking.hotel);
+            isHotelOwner = hotel && hotel.ownerId && hotel.ownerId.toString() === req.user.id.toString();
+        }
+
+        if (!isBookingOwner && !isAdmin && !isHotelOwner) {
             return res.status(403).json({
                 success: false,
                 message: `User ${req.user.id} is not authorized to cancel this booking`
@@ -477,7 +494,11 @@ exports.updateBooking = async (req, res, next) => {
 
         const isBookingOwner = booking.user.toString() === req.user.id;
         const isAdmin = req.user.role === 'admin';
-        const isHotelOwner = req.user.role === 'owner' && req.user.hotel && booking.hotel.toString() === req.user.hotel.toString();
+        let isHotelOwner = false;
+        if (req.user.role === 'owner') {
+            const hotel = await Hotel.findById(booking.hotel);
+            isHotelOwner = hotel && hotel.ownerId && hotel.ownerId.toString() === req.user.id.toString();
+        }
 
         if (!isBookingOwner && !isAdmin && !isHotelOwner) {
             return res.status(403).json({
@@ -501,6 +522,47 @@ exports.updateBooking = async (req, res, next) => {
                 success: false,
                 message: 'Number of nights cannot exceed 3'
             });
+        }
+
+        // Check room availability if dates or nights are being changed
+        const newCheckInDate = req.body.checkInDate || booking.checkInDate;
+        const newNumberOfNights = req.body.numberOfNights || booking.numberOfNights;
+        const roomType = booking.roomType;
+
+        if (roomType && (req.body.checkInDate || req.body.numberOfNights)) {
+            const hotel = await Hotel.findById(booking.hotel);
+            if (hotel) {
+                const roomTypeDef = hotel.roomTypes && hotel.roomTypes.find(rt => rt.id === roomType);
+                if (roomTypeDef && roomTypeDef.totalRooms > 0) {
+                    const checkIn  = new Date(newCheckInDate);
+                    const checkOut = new Date(checkIn.getTime() + newNumberOfNights * 24 * 60 * 60 * 1000);
+
+                    const overlapping = await Booking.countDocuments({
+                        hotel: booking.hotel,
+                        roomType,
+                        status: { $ne: 'cancelled' },
+                        _id: { $ne: booking._id }, // exclude current booking
+                        $expr: {
+                            $and: [
+                                { $lt: ['$checkInDate', checkOut] },
+                                {
+                                    $gt: [
+                                        { $add: ['$checkInDate', { $multiply: ['$numberOfNights', 24 * 60 * 60 * 1000] }] },
+                                        checkIn
+                                    ]
+                                }
+                            ]
+                        }
+                    });
+
+                    if (overlapping >= roomTypeDef.totalRooms) {
+                        return res.status(409).json({
+                            success: false,
+                            message: 'No rooms available for the selected dates.'
+                        });
+                    }
+                }
+            }
         }
 
         booking = await Booking.findByIdAndUpdate(req.params.id, req.body, {

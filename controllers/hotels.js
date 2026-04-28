@@ -314,8 +314,14 @@ exports.getHotelBookingRequests = async (req, res, next) => {
         const { hotelId } = req.params;
 
         // Owner can only see requests for their own hotel
-        if (req.user.role === 'owner' && req.user.hotel && req.user.hotel.toString() !== hotelId) {
-            return res.status(403).json({ success: false, message: 'Not authorized to view requests for this hotel' });
+        if (req.user.role === 'owner') {
+            const hotel = await Hotel.findById(hotelId);
+            if (!hotel) {
+                return res.status(404).json({ success: false, message: 'Hotel not found' });
+            }
+            if (!hotel.ownerId || hotel.ownerId.toString() !== req.user.id.toString()) {
+                return res.status(403).json({ success: false, message: 'Not authorized to view requests for this hotel' });
+            }
         }
 
         // Get all bookings for this hotel first
@@ -377,25 +383,33 @@ exports.getHotelDashboard = async (req, res, next) => {
         const paidBookings = await Booking.find({ hotel: hotelId, paymentStatus: 'paid' });
         const totalRevenue = paidBookings.reduce((sum, b) => sum + b.totalPrice, 0);
 
-        // 4. ดึงรายการจองล่าสุด 5 รายการ (เพื่อแสดงในตาราง Recent Bookings หน้า Dashboard)
+        // 4. Recent bookings
         const recentBookings = await Booking.find({ hotel: hotelId })
             .sort('-createdAt')
             .limit(5)
-            .populate({
-                path: 'user',
-                select: 'name email'
-            });
+            .populate({ path: 'user', select: 'name email' });
+
+        // 5. Monthly booking trend
+        const allHotelBookings = await Booking.find({ hotel: hotelId }).select('checkInDate status');
+        const monthlyBookings = Array(12).fill(0);
+        allHotelBookings.forEach(b => {
+            const month = new Date(b.checkInDate).getMonth();
+            if (month >= 0 && month < 12) monthlyBookings[month]++;
+        });
+
+        // 6. Hotel name
+        const hotel = await Hotel.findById(hotelId).select('name');
 
         // ส่งข้อมูลกลับไปให้ Frontend
         res.status(200).json({
             success: true,
             data: {
-                overview: {
-                    totalBookings,
-                    confirmedBookings,
-                    cancelledBookings,
-                    totalRevenue
-                },
+                totalBookings,
+                confirmedBookings,
+                cancelledBookings,
+                totalRevenue,
+                monthlyBookings,
+                hotelName: hotel?.name || '',
                 recentBookings
             }
         });

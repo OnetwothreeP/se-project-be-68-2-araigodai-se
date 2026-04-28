@@ -3,4 +3,4 @@ config/config.env
 .env
 test-results.json/*
 
-config/config.env
+coverage/
